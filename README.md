@@ -8,9 +8,11 @@ To setup
 ```
     npx hardhat node
     npx hardhat run scripts/deploy.js --network localhost
+```
 
     set Votingaddress in app.js with the contract address
 
+```
     npm start
 ```
 

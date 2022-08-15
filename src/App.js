@@ -13,7 +13,7 @@ function App() {
   const [VoteDetails, setVoteDetails] = useState({}); //{voter:party}
   const [VoteResult, setVoteResult] = useState({});
   const [address, setAddress] = useState("");
-
+  const [message, setMessage] = useState("");
   const onChangeParty = (e) => {
     setParty(e.target.value);
   };
@@ -50,6 +50,10 @@ function App() {
   };
 
   useEffect(() => {
+    const interval = setInterval(() => {
+      setMessage("");
+    }, 1500);
+
     const fun = async () => {
       try {
         provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -70,6 +74,10 @@ function App() {
       }
     };
     fun();
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
@@ -98,7 +106,8 @@ function App() {
     } else {
       message = "User already voted";
     }
-    console.log(message);
+    // console.log(message);
+    setMessage(message);
   };
 
   return (
@@ -109,6 +118,7 @@ function App() {
         <h3> Current User: {address} </h3>
         Party : <Dropdown onChange={onChangeParty} options={listofParties} />
         <button>Submit Vote</button>
+        {message}
       </form>
 
       <h3>Vote Details</h3>

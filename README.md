@@ -25,3 +25,11 @@ GAS_REPORT=true npx hardhat test
 npx hardhat node
 npx hardhat run scripts/deploy.js
 ``` -->
+
+genache
+
+1. deploy the contract
+   npx hardhat run scripts/deploy.js --network genache
+2. assign contract address to VotingAddress
+3. npm start
+   need to refresh after account changing

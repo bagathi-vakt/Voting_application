@@ -14,10 +14,6 @@ contract Voting {
         return parties;
     }
 
-    function add(string memory s) public {
-        parties.push(s);
-    }
-
     function getVotes(string memory party) public view returns (uint256) {
         return voteMap[party];
     }

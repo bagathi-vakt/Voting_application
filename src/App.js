@@ -1,40 +1,25 @@
 import "./App.css";
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import Message from "./components/Message";
 import Voting from "./artifacts/contracts/Voting.sol/Voting.json";
 
-const VotingAddress = "0x8f86403A4DE0BB5791fa46B8e795C547942fE4Cf";
-const provider = new ethers.providers.JsonRpcProvider();
-const contract = new ethers.Contract(VotingAddress, Voting.abi, provider);
-
-let privateKey =
-  "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
-let wallet = new ethers.Wallet(privateKey, provider);
-let contractWithSigner = contract.connect(wallet);
+const VotingAddress = "0x108669E38f1AF26C99DeD6374487E00d726024AD";
+var provider, contract;
 
 function App() {
   const [party, setParty] = useState("");
   const [listofParties, setListofParties] = useState([]);
-  const [name, setName] = useState("");
   const [voters, setVoters] = useState([]);
   const [VoteDetails, setVoteDetails] = useState({}); //{voter:party}
   const [VoteResult, setVoteResult] = useState({});
+  const [address, setAddress] = useState("");
+
   const onChangeParty = (e) => {
     setParty(e.target.value);
   };
-  useEffect(() => {
-    const fun = async () => {
-      try {
-        const s = await contract.getArray();
-        // console.log("list of parties ", s);
-        setListofParties(s);
-        setParty(s[0]);
-      } catch (err) {
-        console.log("error is ", err);
-      }
-    };
-    fun();
+
+  const initializeEvents = () => {
+    //event for voting
 
     contract.on("Vote", (voterName, partyName) => {
       const obj = VoteDetails;
@@ -55,6 +40,36 @@ function App() {
         return previousResultState;
       });
     });
+
+    //event for account changing
+
+    window.ethereum.on("accountsChanged", function (accounts) {
+      // Time to reload your interface with accounts[0]!
+      setAddress(accounts[0]);
+    });
+  };
+
+  useEffect(() => {
+    const fun = async () => {
+      try {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        const address = await provider.getCode(VotingAddress);
+        // console.log("address is ", address);
+        const response = await provider.send("eth_requestAccounts", []);
+        // console.log("res ", response);
+        setAddress(response[0]);
+        contract = new ethers.Contract(VotingAddress, Voting.abi, provider);
+        initializeEvents();
+        const s = await contract.getArray();
+
+        console.log("list of parties ", s);
+        setListofParties(s);
+        setParty(s[0]);
+      } catch (err) {
+        console.log("error is ", err);
+      }
+    };
+    fun();
   }, []);
 
   useEffect(() => {
@@ -66,13 +81,17 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // console.log(e);
-    if (name.length === 0) return;
     let message;
-    const isUserVoted = await contract.isVoted(name);
+    const isUserVoted = await contract.isVoted(address);
     // console.log(`user ${name} voted ?`, isUserVoted);
     if (!isUserVoted) {
       // console.log(`party is ${party}`);
-      const tx = await contractWithSigner.vote(name, party);
+
+      const signer = provider.getSigner();
+
+      const contract = new ethers.Contract(VotingAddress, Voting.abi, signer);
+
+      const tx = await contract.vote(address, party);
       const receipt = await tx.wait();
       // console.log(receipt);
       message = "User Voted Successfully";
@@ -86,7 +105,8 @@ function App() {
     <div className="App">
       <h4>Voting</h4>
       <form onSubmit={handleSubmit}>
-        Name : <input onChange={(e) => setName(e.target.value)} />
+        {/* Name : <input onChange={(e) => setName(e.target.value)} /> */}
+        <h3> Current User: {address} </h3>
         Party : <Dropdown onChange={onChangeParty} options={listofParties} />
         <button>Submit Vote</button>
       </form>
